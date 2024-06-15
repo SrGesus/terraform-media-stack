@@ -18,16 +18,16 @@ resource "sonarr_download_client_qbittorrent" "client" {
 }
 
 resource "sonarr_host" "sonarr" {
+  depends_on = [ sonarr_root_folder.shows, sonarr_download_client_qbittorrent.client ]
   launch_browser  = true
   bind_address    = "*"
   port            = 8989
   url_base        = "/sonarr"
   instance_name   = "Sonarr"
   application_url = ""
-  
   authentication = {
     method   = "basic"
-    required = "enabled"
+    required = "disabledForLocalAddresses"
     username = var.username
     password = var.password
   }
@@ -48,6 +48,14 @@ resource "sonarr_host" "sonarr" {
   }
   update = {
     mechanism = "docker"
-    branch    = "master"
+    branch    = "main"
   }
+}
+
+# Restart Sonarr when settings change because the provider doesn't seem to do it automatically
+resource "null_resource" "sonarr_restart" {
+  provisioner "local-exec" {
+    command = "curl -X POST ${module.k8s.service_ip["sonarr"]}/api/v3/system/restart?apikey=${module.k8s.api_key["sonarr"]}"
+  }
+  depends_on = [ sonarr_host.sonarr ]
 }
