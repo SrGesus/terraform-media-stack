@@ -1,31 +1,37 @@
-variable "namespace" {
-  description = "Name of the namespace to deploy the applications"
-  type        = string
-  default     = "prowlarr"
+variable "kubeconfig" {
+  description = "The path to the kubernetes configuration"
+  type    = string
+  default = "~/.kube/config"
 }
 
 variable "username" {
   description = "Username for servarr applications."
   type        = string
-  default     = "abc"
 }
 
 variable "password" {
   description = "Password for servarr applications."
   type        = string
-  default     = "1"
 }
 
 variable "movies" {
-  description = "The path to the directory containing Movies"
+  description = "The absolute path to the directory that will be containing Movies"
   type        = string
-  default     = "/home/user/Downloads/Movies/Movies"
 }
 
 variable "shows" {
-  description = "The path to the directory containing Shows"
+  description = "The absolute path to the directory that will be containing Shows"
   type        = string
-  default     = "/home/user/Downloads/Movies/Shows"
 }
 
+variable "downloads" {
+  description = "The absolute path used by qbittorrent for downloads."
+  type        = string
+}
+
+variable "namespace" {
+  description = "Name of the namespace to deploy the applications"
+  type        = string
+  default     = "prowlarr"
+}
 

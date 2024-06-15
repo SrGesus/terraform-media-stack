@@ -20,7 +20,7 @@ terraform {
 }
 
 provider "kubernetes" {
-  config_path = "/etc/rancher/k3s/k3s.yaml"
+  config_path = var.kubeconfig
 }
 
 resource "kubernetes_namespace" "prowlarr" {
@@ -45,7 +45,7 @@ locals {
 module "k8s" {
   source = "./k8s"
   namespace = var.namespace
-  downloads = "/home/user/Downloads"
+  downloads = var.downloads
   applications = local.applications
   providers = {
     kubernetes = kubernetes
