@@ -5,5 +5,5 @@ favicon*
 
 # Terraform files
 .terraform*
-terraform*
+terraform.tfstate*
 .auto.tfvars

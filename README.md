@@ -1,4 +1,4 @@
-# kino
+# Terraform Media Stack
 
 My homeserver's media stack setup in Terraform.
 

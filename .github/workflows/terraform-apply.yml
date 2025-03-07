@@ -1,0 +1,28 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  TF_VAR_kubeconfig: ~/.kube/config.yaml
+  TF_VAR_downloads: ~/Downloads/kino
+  TF_VAR_qbittorrent_password: ${{ secrets.Q_PASSWORD }}
+  TF_VAR_username: ${{ secrets.USERNAME }}
+  TF_VAR_password: ${{ secrets.PASSWORD }}
+
+jobs:
+  terraform:
+    name: Terraform Apply
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: false
+      # - name: Apply
+      #   run: |
+      #     terraform init
+      #     terraform apply -target=null_resource.deployment -auto-approve
+      #     terraform apply -auto-approve
