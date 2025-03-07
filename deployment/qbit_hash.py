@@ -20,5 +20,4 @@ h = hashlib.pbkdf2_hmac("sha512", password.encode(), salt, ITERATIONS)
 
 # Base64 encode and join salt and hash
 # print(f"Hash: {base64.b64encode(salt).decode()}:{base64.b64encode(h).decode()}")
-# print(f"Password: {password}")
 print("{\"hash\": " + f"\"{base64.b64encode(salt).decode()}:{base64.b64encode(h).decode()}\"" + "}")

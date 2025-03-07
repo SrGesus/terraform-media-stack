@@ -1,20 +1,19 @@
 terraform {
   required_providers {
-    prowlarr = {
-      source = "devopsarr/prowlarr"
-      version = "2.4.0"
-    }
     kubernetes = {
       source = "hashicorp/kubernetes"
-      version = "2.31.0"
+    }
+    prowlarr = {
+      source = "devopsarr/prowlarr"
     }
     radarr = {
       source = "devopsarr/radarr"
-      version = "2.2.0"
     }
     sonarr = {
       source = "devopsarr/sonarr"
-      version = "3.2.0"
+    }
+    lidarr = {
+      source = "devopsarr/lidarr"
     }
   }
 }
@@ -23,39 +22,76 @@ provider "kubernetes" {
   config_path = var.kubeconfig
 }
 
-resource "kubernetes_namespace" "prowlarr" {
+resource "kubernetes_namespace" "kino" {
   metadata {
     name = var.namespace
   }
 }
 
-locals {
-  applications = {
-    radarr = {
-      library = "/home/user/Downloads/Movies/Movies"
-      port = 7878
-    }
-    sonarr = {
-      library = "/home/user/Downloads/Movies/Shows"
-      port = 8989
-    }
-  }
-}
-
-module "k8s" {
-  source = "./k8s"
-  namespace = var.namespace
-  downloads = var.downloads
-  applications = local.applications
+module "deployment" {
+  source               = "./deployment"
+  namespace            = var.namespace
+  downloads            = var.downloads
+  qbittorrent_password = var.qbittorrent_password
   providers = {
     kubernetes = kubernetes
   }
+  applications = {
+    prowlarr = {
+      library = var.downloads
+    }
+    radarr = {
+      # Path to where the final media content is to be stored. 
+      library = "~/Videos/Movies"
+    }
+    sonarr = {
+      library = "~/Videos/Shows"
+    }
+    lidarr = {
+      library = "~/Music"
+    }
+  }
 }
 
-resource "null_resource" "bootstrapper" {
+module "provisioning" {
+  source               = "./provisioning"
+  namespace            = var.namespace
+  routes               = module.deployment.routes
+  api_keys             = module.deployment.api_keys
+  username             = var.username
+  password             = var.password
+  qbittorrent_password = var.qbittorrent_password
+  providers = {
+    lidarr   = lidarr
+    prowlarr = prowlarr
+    radarr   = radarr
+    sonarr   = sonarr
+  }
+}
+
+provider "lidarr" {
+  url     = "http://${module.deployment.routes.lidarr.clusterip}/lidarr"
+  api_key = module.deployment.api_keys.lidarr
+}
+
+provider "prowlarr" {
+  url     = "http://${module.deployment.routes.prowlarr.clusterip}/prowlarr"
+  api_key = module.deployment.api_keys.prowlarr
+}
+
+provider "radarr" {
+  url     = "http://${module.deployment.routes.radarr.clusterip}/radarr"
+  api_key = module.deployment.api_keys.radarr
+}
+
+provider "sonarr" {
+  url     = "http://${module.deployment.routes.sonarr.clusterip}/sonarr"
+  api_key = module.deployment.api_keys.sonarr
+}
+
+resource "null_resource" "deployment" {
   depends_on = [
-    kubernetes_namespace.prowlarr,
-    module.k8s
+    kubernetes_namespace.kino,
+    module.deployment
   ]
 }
-

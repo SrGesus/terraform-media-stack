@@ -13,20 +13,17 @@ resource "kubernetes_deployment" "jellyfin" {
 
   spec {
     replicas = 1
-
     selector {
       match_labels = {
         "app" = "jellyfin"
       }
     }
-
     template {
       metadata {
         labels = {
           "app" = "jellyfin"
         }
       }
-
       spec {
         container {
           name  = "jellyfin"
@@ -48,27 +45,26 @@ resource "kubernetes_deployment" "jellyfin" {
             mount_path = "/config"
           }
           dynamic "volume_mount" {
-            for_each = var.applications
+            for_each = { for k, v in var.applications: k => v if k != "prowlarr" }
             content {
-              name       = lower(regex("[^/]+$", volume_mount.value.library))
-              mount_path = "/data/${lower(regex("[^/]+$", volume_mount.value.library))}"
+              name       = volume_mount.key
+              mount_path = "/data/${volume_mount.key}"
             }
-            
           }
         }
         volume {
           name = "data"
           host_path {
             path = local.jellyfin_config
-            type = "DirectoryOrCreate" 
+            type = "DirectoryOrCreate"
           }
         }
         dynamic "volume" {
           for_each = var.applications
           content {
-            name = lower(regex("[^/]+$", volume.value.library))
+            name = volume.key
             host_path {
-              path = volume.value.library
+              path = pathexpand(volume.value.library)
               type = "DirectoryOrCreate"
             }
           }
@@ -78,7 +74,6 @@ resource "kubernetes_deployment" "jellyfin" {
   }
 }
 
-
 # Jellyfin routing
 resource "kubernetes_service" "jellyfin_web" {
   metadata {
@@ -86,15 +81,15 @@ resource "kubernetes_service" "jellyfin_web" {
     namespace = var.namespace
   }
   spec {
-  type = "ClusterIP"
-  selector = {
-    "app" = "jellyfin"
-  }
-  port {
-    name        = "web"
-    port        = 80
-    target_port = 8096
-  }
+    type = "ClusterIP"
+    selector = {
+      "app" = "jellyfin"
+    }
+    port {
+      name        = "web"
+      port        = 80
+      target_port = "web"
+    }
   }
   depends_on = [
     kubernetes_deployment.jellyfin
